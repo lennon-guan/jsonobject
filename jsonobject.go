@@ -3,12 +3,13 @@ package jsonobject
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 )
 
 const (
 	Invalid = iota
-	Null
+	Nil
 	Number
 	String
 	Boolean
@@ -61,6 +62,9 @@ func newValue(v any) *JsonValue {
 }
 
 func (v *JsonValue) transformValue(val any) any {
+	if val == nil {
+		return &JsonValue{kind: Nil, val: nil}
+	}
 	switch value := val.(type) {
 	case *JsonValue:
 		return value.val
@@ -226,8 +230,64 @@ func (v *JsonValue) Size() int {
 		return 0
 	}
 }
+
+func (v *JsonValue) IsValid() bool {
+	return v.kind != Invalid
+}
+
+func (v *JsonValue) IsNil() bool {
+	return v.kind == Nil
+}
+
 func (v *JsonValue) String() string {
 	return fmt.Sprint(v.val)
+}
+
+func (v *JsonValue) Float() (float64, error) {
+	if v.kind == Number {
+		switch vv := v.val.(type) {
+		case float64:
+			return vv, nil
+		case float32:
+			return float64(vv), nil
+		case int:
+			return float64(vv), nil
+		case int8:
+			return float64(vv), nil
+		case int16:
+			return float64(vv), nil
+		case int32:
+			return float64(vv), nil
+		case int64:
+			return float64(vv), nil
+		case uint:
+			return float64(vv), nil
+		case uint8:
+			return float64(vv), nil
+		case uint16:
+			return float64(vv), nil
+		case uint32:
+			return float64(vv), nil
+		case uint64:
+			return float64(vv), nil
+		}
+	}
+	return 0, fmt.Errorf("not a number")
+}
+
+func (v *JsonValue) DefaultFloat(defaultValue float64) float64 {
+	if r, e := v.Float(); e == nil {
+		return r
+	}
+	return defaultValue
+}
+
+func (v *JsonValue) MustFloat() float64 {
+	if r, e := v.Float(); e == nil {
+		return r
+	} else {
+		panic(e)
+	}
 }
 
 func (v *JsonValue) Int() (int, error) {
@@ -236,9 +296,13 @@ func (v *JsonValue) Int() (int, error) {
 		case int:
 			return vv, nil
 		case float64:
-			return int(vv), nil
+			if vv == math.Floor(vv) {
+				return int(vv), nil
+			}
 		case float32:
-			return int(vv), nil
+			if v64 := float64(vv); v64 == math.Floor(v64) {
+				return int(vv), nil
+			}
 		case int8:
 			return int(vv), nil
 		case int16:
@@ -259,7 +323,7 @@ func (v *JsonValue) Int() (int, error) {
 			return int(vv), nil
 		}
 	}
-	return 0, fmt.Errorf("not a number")
+	return 0, fmt.Errorf("not an integer")
 }
 
 func (v *JsonValue) DefaultInt(defaultValue int) int {
