@@ -24,13 +24,13 @@ func TestGetValue(t *testing.T) {
 	if v.Field("age").DefaultInt(-1) != 37 {
 		t.Fatalf("age is not 37")
 	}
-	if v.Field("fav.movie").String() != "Deer Hunter" {
+	if v.Field("fav.movie").MustStr() != "Deer Hunter" {
 		t.Fatal("fav.movie is not Deer Hunter")
 	}
-	if fv := v.Field("friends").Index(1).Field("first").String(); fv != "Roger" {
+	if fv := v.Field("friends").Index(1).Field("first").MustStr(); fv != "Roger" {
 		t.Fatalf("friends[1].first is not Roger but %s", fv)
 	}
-	if fv := v.Field("friends").Index(-1).Field("first").String(); fv != "Jane" {
+	if fv := v.Field("friends").Index(-1).Field("first").MustStr(); fv != "Jane" {
 		t.Fatalf("friends[-1].first is not Jane but %s", fv)
 	}
 }
@@ -49,7 +49,7 @@ func TestSetValue(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parse error: %+v", err)
 	}
-	if v2.Field("friends").Index(1).Field("last").String() != "ZGG" {
+	if v2.Field("friends").Index(1).Field("last").MustStr() != "ZGG" {
 		t.Fatal("friends[1].last is not ZGG")
 	}
 	if v2.Field("friends").Size() != 3 {

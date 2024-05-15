@@ -366,6 +366,31 @@ func (v *JsonValue) MustBool() bool {
 	}
 }
 
+func (v *JsonValue) Str() (string, error) {
+	if v.kind == String {
+		switch vv := v.val.(type) {
+		case string:
+			return vv, nil
+		}
+	}
+	return "", fmt.Errorf("not a string")
+}
+
+func (v *JsonValue) DefaultStr(defaultValue string) string {
+	if r, e := v.Str(); e == nil {
+		return r
+	}
+	return defaultValue
+}
+
+func (v *JsonValue) MustStr() string {
+	if r, e := v.Str(); e == nil {
+		return r
+	} else {
+		panic(e)
+	}
+}
+
 func (v *JsonValue) Marshal() ([]byte, error) {
 	return json.Marshal(v.val)
 }
