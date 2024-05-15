@@ -7,6 +7,7 @@ import (
 	"reflect"
 )
 
+// Constants representing the type of JSON values.
 const (
 	Invalid = iota
 	Nil
@@ -17,11 +18,13 @@ const (
 	Object
 )
 
+// JsonValue represents a JSON value of any type.
 type JsonValue struct {
 	kind int
 	val  any
 }
 
+// newValue creates a new JsonValue based on the type of the provided value.
 func newValue(v any) *JsonValue {
 	switch v.(type) {
 	case float64:
@@ -61,6 +64,7 @@ func newValue(v any) *JsonValue {
 	}
 }
 
+// transformValue transforms the given value into its basic equivalent.
 func (v *JsonValue) transformValue(val any) any {
 	if val == nil {
 		return &JsonValue{kind: Nil, val: nil}
@@ -140,6 +144,7 @@ func (v *JsonValue) transformValue(val any) any {
 	return val
 }
 
+// Field returns the JsonValue associated with the given field name.
 func (v *JsonValue) Field(name string) *JsonValue {
 	if m, is := v.val.(map[string]any); !is {
 		return &JsonValue{kind: Invalid, val: nil}
@@ -150,6 +155,7 @@ func (v *JsonValue) Field(name string) *JsonValue {
 	}
 }
 
+// SetField sets the field with the provided name to the specified value.
 func (v *JsonValue) SetField(name string, val any) *JsonValue {
 	if m, is := v.val.(map[string]any); is {
 		m[name] = v.transformValue(val)
@@ -157,6 +163,7 @@ func (v *JsonValue) SetField(name string, val any) *JsonValue {
 	return v
 }
 
+// getRealIndex calculates the real index in an array.
 func (v *JsonValue) getRealIndex(index int) ([]any, int) {
 	if m, is := v.val.([]any); !is {
 		return nil, -1
@@ -174,6 +181,7 @@ func (v *JsonValue) getRealIndex(index int) ([]any, int) {
 	return nil, -1
 }
 
+// Index returns the JsonValue at the specified index in an array.
 func (v *JsonValue) Index(index int) *JsonValue {
 	if m, index := v.getRealIndex(index); index < 0 {
 		return &JsonValue{kind: Invalid, val: nil}
@@ -182,14 +190,15 @@ func (v *JsonValue) Index(index int) *JsonValue {
 	}
 }
 
+// SetIndex sets the array element at the specified index to the provided value.
 func (v *JsonValue) SetIndex(index int, val any) *JsonValue {
-	if m, index := v.getRealIndex(index); index < 0 {
-	} else {
+	if m, index := v.getRealIndex(index); index >= 0 {
 		m[index] = v.transformValue(val)
 	}
 	return v
 }
 
+// Append appends the provided value to the array.
 func (v *JsonValue) Append(val any) *JsonValue {
 	if v.kind != Array {
 		return v
@@ -202,6 +211,7 @@ func (v *JsonValue) Append(val any) *JsonValue {
 	return v
 }
 
+// Each iterates over array elements and applies the provided function on each element.
 func (v *JsonValue) Each(f func(item *JsonValue, index int)) {
 	if v.kind != Array {
 		return
@@ -211,6 +221,7 @@ func (v *JsonValue) Each(f func(item *JsonValue, index int)) {
 	}
 }
 
+// EachPair iterates over key-value pairs in an object and applies the provided function on each pair.
 func (v *JsonValue) EachPair(f func(value *JsonValue, key string)) {
 	if v.kind != Object {
 		return
@@ -220,6 +231,7 @@ func (v *JsonValue) EachPair(f func(value *JsonValue, key string)) {
 	}
 }
 
+// Size returns the size of the array or object represented by the JsonValue.
 func (v *JsonValue) Size() int {
 	switch v.kind {
 	case Array:
@@ -231,18 +243,22 @@ func (v *JsonValue) Size() int {
 	}
 }
 
+// IsValid checks if the JsonValue is valid.
 func (v *JsonValue) IsValid() bool {
 	return v.kind != Invalid
 }
 
+// IsNil checks if the JsonValue is nil.
 func (v *JsonValue) IsNil() bool {
 	return v.kind == Nil
 }
 
+// String returns the string representation of the JsonValue.
 func (v *JsonValue) String() string {
 	return fmt.Sprint(v.val)
 }
 
+// Float returns the value as a float64, if possible.
 func (v *JsonValue) Float() (float64, error) {
 	if v.kind == Number {
 		switch vv := v.val.(type) {
@@ -275,6 +291,7 @@ func (v *JsonValue) Float() (float64, error) {
 	return 0, fmt.Errorf("not a number")
 }
 
+// DefaultFloat returns the float value or a default if it can't be converted.
 func (v *JsonValue) DefaultFloat(defaultValue float64) float64 {
 	if r, e := v.Float(); e == nil {
 		return r
@@ -282,6 +299,7 @@ func (v *JsonValue) DefaultFloat(defaultValue float64) float64 {
 	return defaultValue
 }
 
+// MustFloat returns the float value or panics if it can't be converted.
 func (v *JsonValue) MustFloat() float64 {
 	if r, e := v.Float(); e == nil {
 		return r
@@ -290,6 +308,7 @@ func (v *JsonValue) MustFloat() float64 {
 	}
 }
 
+// Int returns the value as an int, if possible.
 func (v *JsonValue) Int() (int, error) {
 	if v.kind == Number {
 		switch vv := v.val.(type) {
@@ -326,6 +345,7 @@ func (v *JsonValue) Int() (int, error) {
 	return 0, fmt.Errorf("not an integer")
 }
 
+// DefaultInt returns the int value or a default if it can't be converted.
 func (v *JsonValue) DefaultInt(defaultValue int) int {
 	if r, e := v.Int(); e == nil {
 		return r
@@ -333,6 +353,7 @@ func (v *JsonValue) DefaultInt(defaultValue int) int {
 	return defaultValue
 }
 
+// MustInt returns the int value or panics if it can't be converted.
 func (v *JsonValue) MustInt() int {
 	if r, e := v.Int(); e == nil {
 		return r
@@ -341,6 +362,7 @@ func (v *JsonValue) MustInt() int {
 	}
 }
 
+// Bool returns the value as a bool, if possible.
 func (v *JsonValue) Bool() (bool, error) {
 	if v.kind == Boolean {
 		switch vv := v.val.(type) {
@@ -351,6 +373,7 @@ func (v *JsonValue) Bool() (bool, error) {
 	return false, fmt.Errorf("not a boolean")
 }
 
+// DefaultBool returns the boolean value or a default if it can't be converted.
 func (v *JsonValue) DefaultBool(defaultValue bool) bool {
 	if r, e := v.Bool(); e == nil {
 		return r
@@ -358,6 +381,7 @@ func (v *JsonValue) DefaultBool(defaultValue bool) bool {
 	return defaultValue
 }
 
+// MustBool returns the boolean value or panics if it can't be converted.
 func (v *JsonValue) MustBool() bool {
 	if r, e := v.Bool(); e == nil {
 		return r
@@ -366,6 +390,7 @@ func (v *JsonValue) MustBool() bool {
 	}
 }
 
+// Str returns the value as a string, if possible.
 func (v *JsonValue) Str() (string, error) {
 	if v.kind == String {
 		switch vv := v.val.(type) {
@@ -376,6 +401,7 @@ func (v *JsonValue) Str() (string, error) {
 	return "", fmt.Errorf("not a string")
 }
 
+// DefaultStr returns the string value or a default if it can't be converted.
 func (v *JsonValue) DefaultStr(defaultValue string) string {
 	if r, e := v.Str(); e == nil {
 		return r
@@ -383,6 +409,7 @@ func (v *JsonValue) DefaultStr(defaultValue string) string {
 	return defaultValue
 }
 
+// MustStr returns the string value or panics if it can't be converted.
 func (v *JsonValue) MustStr() string {
 	if r, e := v.Str(); e == nil {
 		return r
@@ -391,14 +418,17 @@ func (v *JsonValue) MustStr() string {
 	}
 }
 
+// Marshal marshals the JsonValue into a JSON byte slice.
 func (v *JsonValue) Marshal() ([]byte, error) {
 	return json.Marshal(v.val)
 }
 
+// MarshalIndent marshals the JsonValue into a JSON byte slice with indentation.
 func (v *JsonValue) MarshalIndent(prefix, indent string) ([]byte, error) {
 	return json.MarshalIndent(v.val, prefix, indent)
 }
 
+// MarshalToString marshals the JsonValue into a JSON string.
 func (v *JsonValue) MarshalToString() string {
 	if b, err := v.Marshal(); err != nil {
 		return ""
@@ -407,6 +437,7 @@ func (v *JsonValue) MarshalToString() string {
 	}
 }
 
+// MarshalIndentToString marshals the JsonValue into a JSON string with indentation.
 func (v *JsonValue) MarshalIndentToString(prefix, indent string) string {
 	if b, err := v.MarshalIndent(prefix, indent); err != nil {
 		return ""
@@ -415,6 +446,7 @@ func (v *JsonValue) MarshalIndentToString(prefix, indent string) string {
 	}
 }
 
+// Parse parses a JSON byte slice into a JsonValue.
 func Parse(jsonBytes []byte) (*JsonValue, error) {
 	var v any
 	if err := json.Unmarshal(jsonBytes, &v); err != nil {
@@ -423,10 +455,12 @@ func Parse(jsonBytes []byte) (*JsonValue, error) {
 	return newValue(v), nil
 }
 
+// NewObject creates a new JsonValue representing an empty JSON object.
 func NewObject() *JsonValue {
 	return newValue(map[string]any{})
 }
 
+// NewArray creates a new JsonValue representing an empty JSON array.
 func NewArray() *JsonValue {
 	return newValue([]any{})
 }
